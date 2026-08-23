@@ -129,9 +129,31 @@ Valid common dates are excluded before PHONE evaluation: Brazilian
 `DD-MM-YYYY`, United States `MM-DD-YYYY`, and ISO `YYYY-MM-DD`, using `-`, `.`,
 or `/`, with optional `HH`, `HHMM`, `HH:MM`, or `HH:MM:SS`. Calendar days and
 leap years are validated. This is a bounded byte check over at most 64 bytes,
-not a regex or natural-language parser. Invalid dates remain eligible for normal
+for aggregated candidates, not a regex or natural-language parser. Raw tokens
+use the fast precheck described below. Invalid dates remain eligible for normal
 rules, while a real phone deliberately formatted exactly as a valid date will
 be treated as a date.
+
+ISO `T` date-times and times split into separate numeric fields are recognized.
+For raw tokens, Leakspok uses a constant-time separator precheck before scanning
+date-shaped input; the 64-byte bound applies to aggregated numeric candidates.
+
+## Accepted operational limitations
+
+- Permissive PHONE false positives remain possible and the option stays
+  default-off.
+- An over-limit numeric run is treated as one ambiguous chain; the scanner does
+  not restart inside it, so a phone after a long uninterrupted numeric prefix
+  can be missed.
+- Cancellation or pool failure writes no partially analyzed output, but the
+  current analyzer API cannot return a distinct error; an HTTP caller may see an
+  empty successful result.
+- Contextual processing materializes tokens and therefore uses more memory than
+  the streaming legacy path.
+- Contextual cards require Luhn, while legacy single-token card matching keeps
+  its historical behavior.
+- The checked-in vendor is a private synchronized snapshot. Upstream work must
+  replace it with a tagged Leakspok dependency and normal vendor regeneration.
 
 ## Verification
 

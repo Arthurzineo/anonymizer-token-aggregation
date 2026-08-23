@@ -30,6 +30,8 @@ type ByteAnalyzer struct {
 	logger     *slog.Logger
 	ruleRunner RuleRunner
 
+	contextualDetection bool
+
 	// pool is the shared goroutine pool used for concurrent token dispatch.
 	// Nil when ConcurrentTokenProcessing is disabled; non-nil selects the concurrent token path.
 	pool WorkerPool
@@ -97,9 +99,30 @@ func (t *ByteAnalyzer) Anonymize(ctx context.Context, rules []Rule, output io.Wr
 	var actions []anonymizationAction
 
 	content := data
-	if t.pool != nil {
+	switch {
+	case t.contextualDetection:
+		var contextualActions []contextualAction
+		var complete bool
+		if t.pool != nil {
+			contextualActions, complete = t.anonymizeConcurrentContextual(ctx, rules, content)
+		} else {
+			contextualActions, complete = t.anonymizeSequentialContextual(ctx, rules, content)
+		}
+		if !complete {
+			return AnonymizationDetails{}
+		}
+		for _, action := range contextualActions {
+			detectedEntities[action.entity] = struct{}{}
+		}
+		contextualActions = resolveAnonymizationActions(contextualActions)
+		actions = make([]anonymizationAction, 0, len(contextualActions))
+		for _, action := range contextualActions {
+			actions = append(actions, action.action)
+			anonymizedEntities[action.entity] = struct{}{}
+		}
+	case t.pool != nil:
 		actions = t.anonymizeConcurrent(ctx, rules, content, detectedEntities, anonymizedEntities)
-	} else {
+	default:
 		actions = t.anonymizeSequential(ctx, rules, content, detectedEntities, anonymizedEntities)
 	}
 

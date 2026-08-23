@@ -3,10 +3,10 @@
 ## Why this integration exists
 
 The Leakspok analyzer can optionally aggregate compatible adjacent tokens before
-matching PHONE, CPF, and EMAIL rules. This detects formatted values such as
+matching PHONE, CPF, CREDIT_CARD, and EMAIL rules. This detects formatted values such as
 `+55 54 99912 0654`, `5 5 5 4 9 9 9 1 2 0 6 5 4`,
-`529 982 247 25`, and `test @ example . com`, while retaining the original input
-span for anonymization.
+`529 982 247 25`, `5200 1000 0000 2803`, and `test @ example . com`, while
+retaining the original input span for anonymization.
 
 Anonymizer exposes that capability as an application-level feature flag. It is
 off by default so existing deployments retain their current behavior and cost
@@ -85,9 +85,17 @@ and preserves the existing service and handler boundaries. The default value is
   fragmented value is detected when the feature is enabled.
 - `docs/content/configuration.md`: documents the new environment variable,
   default, and purpose.
+- `vendor/github.com/Prosus-Cyber-Xchange/leakspok/analyzer/byte_analyzer.go`,
+  `factory.go`, `contextual_detection.go`, and `pattern/regex.go`: synchronized
+  production snapshot so Docker and `-mod=vendor` builds use the same private
+  Leakspok implementation as the workspace.
 
 No new HTTP field, endpoint, rule schema, service layer, or runtime dependency
 was introduced.
+
+The vendored snapshot is appropriate for these paired private repositories. An
+upstream release should instead tag Leakspok first, update the Anonymizer module
+version, and regenerate vendor with the normal `task vendor` workflow.
 
 ### Bounded candidate examples
 
@@ -98,15 +106,24 @@ detect when `PRIVACY_CONTEXTUAL_DETECTION_ENABLED=true`:
 | Request text fragments | Canonical value evaluated by Leakspok | Outcome |
 |---|---|---|
 | `+55` `54` `99912` `0654` | `+5554999120654` | PHONE rule can redact the complete original span |
-| `5` `5` `5` `4` `9` `9` `9` `1` `2` `0` `6` `5` `4` | `5554999120654` | supported within the 16-token and 15-digit numeric bounds |
+| `5` `5` `5` `4` `9` `9` `9` `1` `2` `0` `6` `5` `4` | `5554999120654` | supported within the 17-token and 16-digit numeric bounds |
 | `529` `982` `247` `25` | `52998224725` | CPF rule accepts it only with a valid checksum |
+| `5200` `1000` `0000` `2803` | `5200100000002803` | CREDIT_CARD rule requires a supported prefix and valid Luhn checksum |
 | `test` `@` `example` `.` `com` | `test@example.com` | supported at the 5-token email bound |
 
 Newlines, intervening words, and unsupported punctuation stop aggregation. The
-scanner never extends numeric candidates beyond 15 digits, 16 tokens, or 64
-bytes, nor email candidates beyond 5 tokens or 254 bytes. The canonical value is
-used only for validation; anonymization is applied to the original request byte
-span, including its spaces and formatting.
+scanner never extends numeric candidates beyond 16 digits, 17 tokens, or 64
+bytes, nor email candidates beyond 5 tokens or 254 bytes. An over-limit chain is
+rejected as a whole, so a shorter prefix is not anonymized while leaving a tail
+visible. The canonical value is used only for validation; anonymization is
+applied to the original request byte span, including its spaces and formatting.
+
+PHONE continues to use Leakspok's permissive legacy matcher. Consequently,
+unrelated numeric groups such as `Sala 101 202 303` may be classified as PHONE
+when contextual detection is enabled. This known false-positive trade-off is
+documented and is one reason the feature remains opt-in. A complete 16-digit
+chain is isolated to CREDIT_CARD evaluation and additionally requires Luhn, so
+it is not partially classified as PHONE.
 
 ## Verification
 

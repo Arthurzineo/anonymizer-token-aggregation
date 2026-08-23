@@ -22,10 +22,14 @@ Environment variables are parsed at startup using `caarlos0/env`. When using `ta
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `PRIVACY_CONTEXTUAL_DETECTION_ENABLED` | `false` | Detect bounded PHONE, CPF and EMAIL spans split by horizontal delimiters |
+| `PRIVACY_CONTEXTUAL_DETECTION_ENABLED` | `false` | Detect bounded PHONE, CPF, CREDIT_CARD and EMAIL spans split by horizontal delimiters |
 
 Contextual detection is opt-in. It preserves the original byte range for
 redaction or masking and never joins candidates across words or newlines.
+Numeric chains are limited to 16 digits, 17 tokens, and 64 bytes; an over-limit
+chain produces no partial-prefix finding. Contextual credit cards require Luhn.
+The permissive legacy PHONE matcher can classify unrelated numeric groups as a
+phone, so enable this option only after evaluating representative input.
 
 ## Redis / Cache
 

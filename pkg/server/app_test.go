@@ -2,6 +2,7 @@ package server_test
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -111,6 +112,30 @@ func TestHandler_CEEndpointsWork(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rec.Code)
 	assert.Contains(t, rec.Body.String(), "REDACTED")
 	assert.NotContains(t, rec.Body.String(), "user@example.com")
+}
+
+func TestHandler_ContextualCreditCardFromConfig(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode")
+	}
+
+	cfg := setupRedis(t)
+	cfg.Privacy.ContextualDetectionEnabled = true
+	app, err := server.NewFromConfig(context.Background(), server.WithEnv(cfg))
+	require.NoError(t, err)
+
+	body := `{"text":"Card 5200 1000 0000 2803","settings":{"entities":[{"name":"CREDIT_CARD","redaction":{"replacement":"<CARD>"}}]}}`
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/anonymize", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	app.Handler().ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusOK, rec.Code)
+	var response struct {
+		AnonymizedText string `json:"anonymized_text"`
+	}
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &response))
+	assert.Equal(t, "Card <CARD>", response.AnonymizedText)
 }
 
 func TestHandler_BatchEndpointWorks(t *testing.T) {

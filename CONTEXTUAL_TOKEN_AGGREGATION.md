@@ -125,6 +125,14 @@ documented and is one reason the feature remains opt-in. A complete 16-digit
 chain is isolated to CREDIT_CARD evaluation and additionally requires Luhn, so
 it is not partially classified as PHONE.
 
+Valid common dates are excluded before PHONE evaluation: Brazilian
+`DD-MM-YYYY`, United States `MM-DD-YYYY`, and ISO `YYYY-MM-DD`, using `-`, `.`,
+or `/`, with optional `HH`, `HHMM`, `HH:MM`, or `HH:MM:SS`. Calendar days and
+leap years are validated. This is a bounded byte check over at most 64 bytes,
+not a regex or natural-language parser. Invalid dates remain eligible for normal
+rules, while a real phone deliberately formatted exactly as a valid date will
+be treated as a date.
+
 ## Verification
 
 The repository's existing configuration, handler, server, cache, and end-to-end

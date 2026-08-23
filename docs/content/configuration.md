@@ -30,6 +30,9 @@ Numeric chains are limited to 16 digits, 17 tokens, and 64 bytes; an over-limit
 chain produces no partial-prefix finding. Contextual credit cards require Luhn.
 The permissive legacy PHONE matcher can classify unrelated numeric groups as a
 phone, so enable this option only after evaluating representative input.
+Valid BR (`DD-MM-YYYY`), US (`MM-DD-YYYY`), and ISO (`YYYY-MM-DD`) calendar
+dates, including common optional 24-hour times, are excluded from PHONE with a
+bounded non-regex check.
 
 ## Redis / Cache
 

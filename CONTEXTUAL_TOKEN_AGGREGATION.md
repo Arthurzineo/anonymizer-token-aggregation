@@ -134,7 +134,8 @@ use the fast precheck described below. Invalid dates remain eligible for normal
 rules, while a real phone deliberately formatted exactly as a valid date will
 be treated as a date.
 
-ISO `T` date-times and times split into separate numeric fields are recognized.
+ISO `T` date-times, optional fractional seconds with one to nine digits and `Z`
+or numeric timezone offsets, and times split into separate numeric fields are recognized.
 For raw tokens, Leakspok uses a constant-time separator precheck before scanning
 date-shaped input; the 64-byte bound applies to aggregated numeric candidates.
 
@@ -145,11 +146,15 @@ date-shaped input; the 64-byte bound applies to aggregated numeric candidates.
 - An over-limit numeric run is treated as one ambiguous chain; the scanner does
   not restart inside it, so a phone after a long uninterrupted numeric prefix
   can be missed.
+- Independent legacy findings already found within a rejected contextual chain
+  are preserved. For example, `11 987654321 +5` can anonymize the phone portion
+  and leave the invalid trailing `+5` unchanged.
 - Cancellation or pool failure writes no partially analyzed output, but the
   current analyzer API cannot return a distinct error; an HTTP caller may see an
   empty successful result.
-- Contextual processing materializes tokens and therefore uses more memory than
-  the streaming legacy path.
+- Contextual processing materializes tokens when a possible numeric or email
+  marker is present and therefore uses more memory than the streaming legacy
+  path for those inputs. Marker-free text returns to the legacy path first.
 - Contextual cards require Luhn, while legacy single-token card matching keeps
   its historical behavior.
 - The checked-in vendor is a private synchronized snapshot. Upstream work must

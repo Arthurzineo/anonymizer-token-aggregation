@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/Prosus-Cyber-Xchange/anonymizer/pkg/config"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -101,4 +100,13 @@ func TestLoadEnv_LogLevelCaseSensitivity(t *testing.T) {
 			assert.Equal(t, level, envConfig.LogLevel)
 		})
 	}
+}
+
+func TestLoadEnv_ContextualDetection(t *testing.T) {
+	t.Setenv("PRIVACY_CONTEXTUAL_DETECTION_ENABLED", "true")
+
+	envConfig, err := config.LoadEnv()
+
+	require.NoError(t, err)
+	assert.True(t, envConfig.Privacy.ContextualDetectionEnabled)
 }

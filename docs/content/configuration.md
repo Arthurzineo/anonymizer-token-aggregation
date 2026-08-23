@@ -18,6 +18,15 @@ Environment variables are parsed at startup using `caarlos0/env`. When using `ta
 | `SERVICE_NAME` | `""` | Service name for OpenTelemetry |
 | `PATTERN_MONITORING_ENABLED` | `false` | Enable leakspok pattern monitoring for debugging |
 
+## Contextual PII detection
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PRIVACY_CONTEXTUAL_DETECTION_ENABLED` | `false` | Detect bounded PHONE, CPF and EMAIL spans split by horizontal delimiters |
+
+Contextual detection is opt-in. It preserves the original byte range for
+redaction or masking and never joins candidates across words or newlines.
+
 ## Redis / Cache
 
 Cache configuration uses the `PRIVACY_CACHE_` prefix. When caching is enabled, rule matching results are cached to avoid re-evaluating patterns on repeated input.

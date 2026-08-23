@@ -12,7 +12,6 @@ import (
 
 	"github.com/Prosus-Cyber-Xchange/anonymizer/internal/handler"
 	"github.com/Prosus-Cyber-Xchange/anonymizer/pkg/privacy"
-
 	"github.com/Prosus-Cyber-Xchange/leakspok/analyzer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,6 +26,40 @@ func newTestByteAnalyzer(t *testing.T, logger *slog.Logger) analyzer.ByteAnalyze
 	a, err := analyzer.MakeByteAnalyzer(context.Background(), logger, analyzer.RunnerOptions{})
 	require.NoError(t, err)
 	return a
+}
+
+func newContextualTestByteAnalyzer(t *testing.T, logger *slog.Logger) analyzer.ByteAnalyzer {
+	t.Helper()
+	a, err := analyzer.MakeByteAnalyzer(context.Background(), logger, analyzer.RunnerOptions{
+		ContextualDetection: analyzer.ContextualDetectionOptions{Enabled: true},
+	})
+	require.NoError(t, err)
+	return a
+}
+
+func TestHandler_AnonymizeContextualPhone(t *testing.T) {
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelError}))
+	privacyService := privacy.NewService(newContextualTestByteAnalyzer(t, logger), logger)
+	h := handler.NewHandler(handler.HandlerConfig{
+		Logger: logger, PrivacyService: privacyService, MaxBatchSize: maxBatchSize,
+	})
+
+	body := `{"text":"Ligue para +55 54 99912 0654","settings":{"entities":[{"name":"PHONE","redaction":{"replacement":"<PHONE>"}}]}}`
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/anonymize", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	h.Anonymize(rec, req)
+
+	assert.Equal(t, http.StatusOK, rec.Code)
+	var response struct {
+		AnonymizedText   string   `json:"anonymized_text"`
+		DetectedEntities []string `json:"detected_entities"`
+	}
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &response))
+	assert.Equal(t, "Ligue para <PHONE>", response.AnonymizedText)
+	assert.NotContains(t, response.AnonymizedText, "+55 54 99912 0654")
+	assert.Equal(t, []string{"PHONE"}, response.DetectedEntities)
 }
 
 // batchResponse mirrors anonymizeResponse for decoding batch results in tests

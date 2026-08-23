@@ -1,9 +1,6 @@
 package server
 
 import (
-	"github.com/Prosus-Cyber-Xchange/anonymizer/internal/handler"
-	"github.com/Prosus-Cyber-Xchange/anonymizer/pkg/config"
-	"github.com/Prosus-Cyber-Xchange/anonymizer/pkg/privacy"
 	"context"
 	"errors"
 	"fmt"
@@ -12,6 +9,9 @@ import (
 	"os"
 	"strings"
 
+	"github.com/Prosus-Cyber-Xchange/anonymizer/internal/handler"
+	"github.com/Prosus-Cyber-Xchange/anonymizer/pkg/config"
+	"github.com/Prosus-Cyber-Xchange/anonymizer/pkg/privacy"
 	"github.com/Prosus-Cyber-Xchange/leakspok/analyzer"
 	leakspokmonitoring "github.com/Prosus-Cyber-Xchange/leakspok/monitoring"
 	"github.com/go-chi/chi/v5"
@@ -58,7 +58,6 @@ func NewFromConfig(ctx context.Context, opts ...Option) (*AnonymizerServer, erro
 
 	// Create ByteAnalyzer if not provided, populating RunnerOptions from env config.
 	if a.byteAnalyzer == nil {
-
 		// Build RunnerOptions with Cache and Concurrency.
 		runnerOpts := analyzer.RunnerOptions{
 			Cache: analyzer.CacheOptions{
@@ -74,6 +73,9 @@ func NewFromConfig(ctx context.Context, opts ...Option) (*AnonymizerServer, erro
 				RedisMinIdleConns:       a.envConfig.Privacy.RedisMinIdleConns,
 				RedisInsecureSkipVerify: true,
 				RedisDisableClusterMode: a.envConfig.Privacy.RedisDisableCluster,
+			},
+			ContextualDetection: analyzer.ContextualDetectionOptions{
+				Enabled: a.envConfig.Privacy.ContextualDetectionEnabled,
 			},
 		}
 

@@ -89,6 +89,25 @@ and preserves the existing service and handler boundaries. The default value is
 No new HTTP field, endpoint, rule schema, service layer, or runtime dependency
 was introduced.
 
+### Bounded candidate examples
+
+Candidate construction occurs inside Leakspok; Anonymizer only enables it for
+the shared analyzer. The following examples illustrate what the integration can
+detect when `PRIVACY_CONTEXTUAL_DETECTION_ENABLED=true`:
+
+| Request text fragments | Canonical value evaluated by Leakspok | Outcome |
+|---|---|---|
+| `+55` `54` `99912` `0654` | `+5554999120654` | PHONE rule can redact the complete original span |
+| `5` `5` `5` `4` `9` `9` `9` `1` `2` `0` `6` `5` `4` | `5554999120654` | supported within the 16-token and 15-digit numeric bounds |
+| `529` `982` `247` `25` | `52998224725` | CPF rule accepts it only with a valid checksum |
+| `test` `@` `example` `.` `com` | `test@example.com` | supported at the 5-token email bound |
+
+Newlines, intervening words, and unsupported punctuation stop aggregation. The
+scanner never extends numeric candidates beyond 15 digits, 16 tokens, or 64
+bytes, nor email candidates beyond 5 tokens or 254 bytes. The canonical value is
+used only for validation; anonymization is applied to the original request byte
+span, including its spaces and formatting.
+
 ## Verification
 
 The repository's existing configuration, handler, server, cache, and end-to-end

@@ -114,9 +114,10 @@ detect when `PRIVACY_CONTEXTUAL_DETECTION_ENABLED=true`:
 Newlines, intervening words, and unsupported punctuation stop aggregation. The
 scanner never extends numeric candidates beyond 16 digits, 17 tokens, or 64
 bytes, nor email candidates beyond 5 tokens or 254 bytes. An over-limit chain is
-rejected as a whole, so a shorter prefix is not anonymized while leaving a tail
-visible. The canonical value is used only for validation; anonymization is
-applied to the original request byte span, including its spaces and formatting.
+rejected as a whole, so a shorter contextual prefix is not anonymized while
+leaving a tail visible. Independent legacy per-token matches may still remain.
+The canonical value is used only for validation; anonymization is applied to the
+original request byte span, including its spaces and formatting.
 
 PHONE continues to use Leakspok's permissive legacy matcher. Consequently,
 unrelated numeric groups such as `Sala 101 202 303` may be classified as PHONE
@@ -154,30 +155,15 @@ for marker-free text, with identical allocation counts. Inputs that entered the
 contextual path took 44.5% to 55.9% more time (51.7% simple mean), but each tested
 short operation remained below 8 microseconds.
 
-CPU was not profiled directly. Since the measured work is in-memory and
-CPU-bound, the time delta is a reasonable estimate of extra CPU per contextual
-operation, not of total service CPU. Total impact depends on what fraction of
-requests activate contextual processing and requires a representative load
-test. The figures are local measurements, not an SLA.
-
-## Preliminary PT-BR corpus evaluation
-
-Using the opt-in Leakspok corpus comparison with Carolina 2.0.1 `DATc.xml.gz`
-(SHA-256 `7d832d977530356243a53d67614aeef91fe46bedb0bc6515cef2382cc8812c50`),
-10,808 documents and 1,097,485 extracted text bytes produced five additional
-PHONE findings across four documents. Manual review found four false positives
-(two spaced dates and two order identifiers) and one public commercial service
-number, which is not evidence of improved PII recall. No additional PII was
-confirmed, and no additional CPF, card, or email finding appeared in this
-sample. This small, single-source experiment is preliminary and is not a
-production precision estimate.
+CPU was not profiled directly, so no CPU percentage is claimed. Total latency
+and CPU impact require representative production traffic and a dedicated load
+test. The figures above are local timing measurements, not an SLA.
 
 ## Accepted operational limitations
 
 - Permissive PHONE false positives remain possible and the option stays
   default-off.
-- Spaced dates such as `27 12 2017` and fragmented order identifiers remain
-  known PHONE false positives; both appeared in the preliminary corpus run.
+- Spaced dates such as `27 12 2017` remain known PHONE false positives.
 - The date exclusion currently covers the documented separator-based BR, US,
   and ISO forms, but not every space-separated representation. In particular,
   `27 12 2017` can still be classified as PHONE and remains follow-up work.
@@ -200,6 +186,9 @@ production precision estimate.
 - Adversarial input with `"1 "` repeated tens or hundreds of thousands of times.
 - Worst-case time, memory, allocation, and goroutine measurements.
 - Cancellation during adversarial input processing.
+
+### Additional operational limitations
+
 - An over-limit numeric run is treated as one ambiguous chain; the scanner does
   not restart inside it, so a phone after a long uninterrupted numeric prefix
   can be missed.
@@ -215,7 +204,7 @@ production precision estimate.
 - Contextual cards require Luhn, while legacy single-token card matching keeps
   its historical behavior. Formatting can therefore change the result for an
   invalid-Luhn value; this is a compatibility limitation, not a faulty checksum.
-- The checked-in vendor is a private synchronized snapshot. Upstream work must
+- The checked-in vendor is a synchronized experimental snapshot. Upstream work must
   replace it with a tagged Leakspok dependency and normal vendor regeneration.
 
 ## Verification

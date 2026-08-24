@@ -139,6 +139,19 @@ or numeric timezone offsets, and times split into separate numeric fields are re
 For raw tokens, Leakspok uses a constant-time separator precheck before scanning
 date-shaped input; the 64-byte bound applies to aggregated numeric candidates.
 
+## Measured performance
+
+Local three-run benchmark medians showed approximately 0% to 2.3% extra time
+for marker-free text, with identical allocation counts. Inputs that entered the
+contextual path took 44.5% to 55.9% more time (51.7% simple mean), but each tested
+short operation remained below 8 microseconds.
+
+CPU was not profiled directly. Since the measured work is in-memory and
+CPU-bound, the time delta is a reasonable estimate of extra CPU per contextual
+operation, not of total service CPU. Total impact depends on what fraction of
+requests activate contextual processing and requires a representative load
+test. The figures are local measurements, not an SLA.
+
 ## Accepted operational limitations
 
 - Permissive PHONE false positives remain possible and the option stays

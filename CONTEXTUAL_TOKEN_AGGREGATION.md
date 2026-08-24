@@ -160,10 +160,23 @@ operation, not of total service CPU. Total impact depends on what fraction of
 requests activate contextual processing and requires a representative load
 test. The figures are local measurements, not an SLA.
 
+## Preliminary PT-BR corpus evaluation
+
+Using the opt-in Leakspok corpus comparison with Carolina 2.0.1 `DATc.xml.gz`
+(SHA-256 `7d832d977530356243a53d67614aeef91fe46bedb0bc6515cef2382cc8812c50`),
+10,808 documents and 1,097,485 extracted text bytes produced five additional
+PHONE findings across four documents. Manual review found one real service
+phone (`4003 1000`) and four false positives: two spaced dates and two order
+identifiers. No additional CPF, card, or email finding appeared in this sample.
+This small, single-source experiment is preliminary and is not a production
+precision estimate.
+
 ## Accepted operational limitations
 
 - Permissive PHONE false positives remain possible and the option stays
   default-off.
+- Spaced dates such as `27 12 2017` and fragmented order identifiers remain
+  known PHONE false positives; both appeared in the preliminary corpus run.
 - An over-limit numeric run is treated as one ambiguous chain; the scanner does
   not restart inside it, so a phone after a long uninterrupted numeric prefix
   can be missed.

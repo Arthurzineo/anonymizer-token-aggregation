@@ -165,11 +165,12 @@ test. The figures are local measurements, not an SLA.
 Using the opt-in Leakspok corpus comparison with Carolina 2.0.1 `DATc.xml.gz`
 (SHA-256 `7d832d977530356243a53d67614aeef91fe46bedb0bc6515cef2382cc8812c50`),
 10,808 documents and 1,097,485 extracted text bytes produced five additional
-PHONE findings across four documents. Manual review found one real service
-phone (`4003 1000`) and four false positives: two spaced dates and two order
-identifiers. No additional CPF, card, or email finding appeared in this sample.
-This small, single-source experiment is preliminary and is not a production
-precision estimate.
+PHONE findings across four documents. Manual review found four false positives
+(two spaced dates and two order identifiers) and one public commercial service
+number, which is not evidence of improved PII recall. No additional PII was
+confirmed, and no additional CPF, card, or email finding appeared in this
+sample. This small, single-source experiment is preliminary and is not a
+production precision estimate.
 
 ## Accepted operational limitations
 

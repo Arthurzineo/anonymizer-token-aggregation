@@ -125,6 +125,14 @@ documented and is one reason the feature remains opt-in. A complete 16-digit
 chain is isolated to CREDIT_CARD evaluation and additionally requires Luhn, so
 it is not partially classified as PHONE.
 
+The contextual Luhn implementation is intentional and correct: separators are
+removed, exactly 16 digits are required, the existing supported-card prefix
+check still applies, and the checksum must be valid. A failed complete card
+candidate is not partially offered to PHONE or CPF. The historical single-token
+matcher remains unchanged for compatibility and may not impose the same Luhn
+requirement. Unifying both paths would therefore be a separately reviewed
+breaking behavior change, rather than a correction to contextual Luhn.
+
 Valid common dates are excluded before PHONE evaluation: Brazilian
 `DD-MM-YYYY`, United States `MM-DD-YYYY`, and ISO `YYYY-MM-DD`, using `-`, `.`,
 or `/`, with optional `HH`, `HHMM`, `HH:MM`, or `HH:MM:SS`. Calendar days and
@@ -169,7 +177,8 @@ test. The figures are local measurements, not an SLA.
   marker is present and therefore uses more memory than the streaming legacy
   path for those inputs. Marker-free text returns to the legacy path first.
 - Contextual cards require Luhn, while legacy single-token card matching keeps
-  its historical behavior.
+  its historical behavior. Formatting can therefore change the result for an
+  invalid-Luhn value; this is a compatibility limitation, not a faulty checksum.
 - The checked-in vendor is a private synchronized snapshot. Upstream work must
   replace it with a tagged Leakspok dependency and normal vendor regeneration.
 

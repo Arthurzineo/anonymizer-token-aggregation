@@ -186,6 +186,20 @@ production precision estimate.
   operational evaluation data, not necessarily a model-training dataset. Until
   it is available, per-operation benchmark deltas must not be presented as a
   reliable service-wide CPU or latency impact.
+- Per-candidate bounds exist, but no dedicated whole-request rule currently
+  handles adversarial payloads such as `"1 "` repeated tens or hundreds of
+  thousands of times. A global input policy for this case is future
+  implementation work and must be coordinated with HTTP request-size limits.
+
+### Tests still required
+
+- Fuzzing with the flag disabled to prove exact legacy output and metadata
+  equivalence.
+- Fuzzing with the flag enabled to preserve legacy findings except for
+  explicitly documented suppressions.
+- Adversarial input with `"1 "` repeated tens or hundreds of thousands of times.
+- Worst-case time, memory, allocation, and goroutine measurements.
+- Cancellation during adversarial input processing.
 - An over-limit numeric run is treated as one ambiguous chain; the scanner does
   not restart inside it, so a phone after a long uninterrupted numeric prefix
   can be missed.

@@ -178,6 +178,14 @@ production precision estimate.
   default-off.
 - Spaced dates such as `27 12 2017` and fragmented order identifiers remain
   known PHONE false positives; both appeared in the preliminary corpus run.
+- The date exclusion currently covers the documented separator-based BR, US,
+  and ISO forms, but not every space-separated representation. In particular,
+  `27 12 2017` can still be classified as PHONE and remains follow-up work.
+- The real contextual-path activation rate cannot be estimated without
+  representative production prompts or an equivalent traffic corpus. This is
+  operational evaluation data, not necessarily a model-training dataset. Until
+  it is available, per-operation benchmark deltas must not be presented as a
+  reliable service-wide CPU or latency impact.
 - An over-limit numeric run is treated as one ambiguous chain; the scanner does
   not restart inside it, so a phone after a long uninterrupted numeric prefix
   can be missed.
